@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>GiraSeed - Simulador de Plagas en Girasol</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                  url('https://i.pinimg.com/736x/aa/90/0b/aa900b6db00e82316308db4fb7bac90d.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    header {
+      background: rgb(52, 92, 52);
+      padding: 2em;
+      text-align: center;
+      border-bottom: 3px solid #ffeb3b;
+    }
+
+    h1 {
+      font-size: 4.5em;
+      color: #ffeb3b;
+      text-shadow: 1px 1px 3px #000;
+    }
+
+
+    h4 {
+      font-size: 1.2em;
+      color: #ffffff;
+      text-shadow: 1px 1px 3px #000;
+    }
+
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 3em;
+      background: rgba(0, 0, 0, 0.65);
+      gap: 20px;
+      font-size: 1.2em;
+    }
+
+    .left, .right {
+      flex: 1;
+      padding: 1em;
+      min-width: 300px;
+    }
+
+    .info-box {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 1em;
+      gap: 10px;
+    }
+
+    .tag {
+      background: #2e7d32;
+      padding: 0.5em 1em;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .circle-container {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      margin: 2em 0;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 10px solid #66bb6a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s;
+      background: rgba(0,0,0,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .circle img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .circle:hover img {
+      transform: scale(1.2);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5em;
+      border-radius: 12px;
+      margin-bottom: 1.5em;
+      border-left: 4px solid #ff9800;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      font-size: 1.1rem
+    }
+
+    .panel h2 {
+      color: #ffeb3b;
+      margin-bottom: 1em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.7rem
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.7em;
+      margin-bottom: 1.5em;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      font-size: 1.2rem
+    }
+
+    button {
+      padding: 0.8em 1.2em;
+      border: none;
+      background: #ff9800;
+      color: black;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: #ffb74d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.1);
+      padding: 1em;
+      border-radius: 10px;
+      margin-top: 1em;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stat {
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 2em;
+      margin-top: 0.3em;
+      color: #ffeb3b;
+      font-weight: bold;
+    }
+
+    .scout-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .scout-point {
+      background: #4caf50;
+      padding: 10px;
+      text-align: center;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+
+    .scout-point:hover {
+      background: #81c784;
+      transform: scale(1.05);
+    }
+
+    .scout-point.seleccionado {
+      background: #ff9800;
+      color: black;
+    }
+    /*.scout-point.scouted {
+      background: #ff9800;
+      color: black;
+    }*/
+
+    .chart-container {
+      height: 250px;
+      margin-top: 20px;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #d32f2f;
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      animation: fadeIn 0.5s;
+      z-index: 1000;
+      max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .product-info {
+      background: rgba(0,60,0,0.3);
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 1.2em;
+    }
+
+    .simulation-results {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .simulation-day {
+      margin-bottom: 5px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .simulation-day.critical {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .simulation-day.application {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .circle-container {
+        flex-direction: row;
+      }
+      
+      .scout-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header style="display: flex; align-items: center; justify-content: center; gap: 10px; background-color: #0d3d26; padding: 15px 20px; color: white;">
+    <img src="img/foto.png" alt="Logo GiraSeed" style="height: 90px;">
+    <h1 style="margin: 0;">GiraSeed</h1>
+  </header>
+  
+
+<div class="container">
+  <!-- Panel Izquierdo -->
+  <div class="left">
+    <div class="info-box">
+      <div class="tag">🌡 <span id="tempValue">25</span>°C <input type="range" id="temp" min="15" max="35" value="25" style="width:60px; display:inline-block;"></div>
+      <div class="tag">🌸 <span id="seasonValue">Primavera</span></div>
+      <div class="tag">💧 <span id="humidityValue">60</span>% HR <input type="range" id="humidity" min="30" max="90" value="60" style="width:60px; display:inline-block;"></div>
+      <div class="tag">📍 Norte de La Pampa</div>
+    </div>
+
+    <div class="panel">
+      <h2>🔍 Monitoreo de Campo</h2>
+      <div class="scout-grid">
+        <div class="scout-point" onclick="scout(this, 1)">LOTE 1</div>
+        <div class="scout-point" onclick="scout(this, 2)">LOTE 2</div>
+        <div class="scout-point" onclick="scout(this, 3)">LOTE 3</div>
+        <div class="scout-point" onclick="scout(this, 4)">LOTE 4</div>
+        <div class="scout-point" onclick="scout(this, 5)">LOTE 5</div>
+      </div>
+      <div id="scout-result">Realice muestreos de los Lotes</div>
+    </div>
+
+    <div class="circle-container">
+      <div class="circle" id="circleFlor" title="Estado del cultivo"><img src="https://www.infocampo.com.ar/wp-content/uploads/2020/06/girasol-foto.jpg"/></div>
+      <div class="circle" id="circleOruga" title="Nivel de plaga"><img src="https://summit-agro.com/cl/es/wp-content/uploads/2020/12/Oruga-medidora-Rachiplusia-nu.jpg"/></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">Orugas/planta<span id="orugasStats">5</span></div>
+      <div class="stat">Daño<span id="danioStats">0%</span></div>
+      <div class="stat">Defoliación<span id="defoliacionStats">0%</span></div>
+      <div class="stat">Días<span id="diaStats">1</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>📈 Umbral Económico</h2>
+      <h4>Precio girasol (USD/Tn):</h4>
+      <input type="number" id="precio" value="250" min="100" max="500">
+      <h4>Costo tratamiento (USD/ha):</h4>
+      <input type="number" id="costo" value="35" min="10" max="100">
+      <p id="umbral-info" style="margin-top:10px; font-weight:bold;">Umbral actual: 5 orugas/planta</p>
+      <p id="decision-aplicar" style="margin-top:10px; font-size:1.1em;"></p>
+    </div>
+  </div>
+
+  <!-- Panel Derecho -->
+  <div class="right">
+    <div class="panel">
+      <h2>🔄 Selección de Producto</h2>
+      <select id="producto" onchange="actualizarDosis()">
+        <option value="amplico">AMPLIGO® (clorantraniliprol + lambda-cihalotrina)</option>
+        <option value="coragen">CORAGEN® (clorantraniliprol)</option>
+        <option value="dipel">DIPEL® (Bacillus thuringiensis)</option> 
+      </select>
+      <button onclick="seleccionarAleatorio()">Seleccionar</button>
+      <div class="product-info">
+        <p id="modo-accion">Modo de acción: Grupo 28 + 3 (Diamidas + Piretroides)</p>
+        <p id="dosis-recomendada">Dosis recomendada: 80-110 cm³/ha</p>
+        <p id="residual">Duración residual: 16 días</p>
+    
+      </div>
+    </div>
+   
+
+    <div class="panel">
+      <h2>⚗️ Aplicación</h2>
+      <h4>💧 Dosis: <span id="dosisResultado">–</span> cm³/ha</h4>
+      <h4>Orugas/planta (estimadas):</h4>
+      <input type="number" id="orugas" value="5" min="0" max="30">
+      <h4>Tipo de Aplicacion:</h4>
+      <input type="string" id="d" value="TERRESTRE">
+      <!--<button onclick="calcular()">Realizar Aplicación</button>-->
+      <button onclick="simular30Dias()" style="margin-top:10px; background:#4caf50;">Simular 30 días</button>
+      <button onclick="simularSinTratamiento()" style="margin-top:10px; background:#f44336;">Simular sin tratamiento (7 días)</button>
+    </div>
+
+    <div class="panel">
+      <h2>📊 Dinámica de Plaga</h2>
+      <div class="chart-container">
+        <canvas id="graficoPlaga"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📝 Resultados</h2>
+      <h4><strong>Efectividad:</strong> <span id="efectividad">-</span></h4>
+      <h4><strong>Recomendación:</strong> <span id="reco">-</span></h4>
+      <h4><strong>Próxima aplicación:</strong> <span id="proxima-aplicacion">-</span></h4>
+      <div class="simulation-results" id="simulationResults"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Variables globales
+  let dia = 1;
+  let daño = 0;
+  let historial = [];
+  let scoutData = [];
+  let plagaChart;
+  let ultimaAplicacion = null;
+  let residualActivo = false;
+  let diasResidual = 0;
+  
+  // datos fitosanitarios s
+  let productData = {
+    'amplico': { 
+      nombre: "AMPLIGO®",
+      ingrediente: "clorantraniliprol + lambda-chialotrina",
+      grupo: '28 + 3', 
+      dosis: '80-110', 
+      efectividad: 0.95, 
+      residual: 14,
+      reduccionMin: 2,
+      reduccionMax: 6,
+      color: 'rgb(76, 175, 80)'
+    },
+    'coragen': { 
+      nombre: "CORAGEN®",
+      ingrediente: "clorantraniliprol",
+      grupo: '28', 
+      dosis: '30-50', 
+      efectividad: 0.92, 
+      residual: 12,
+      reduccionMin: 1,
+      reduccionMax: 4,
+      color: 'rgb(54, 162, 235)'
+    },
+    'dipel': { 
+      nombre: "DIPEL®",
+      ingrediente: "Bacillus thuringiensis",
+      grupo: '11', 
+      dosis: '500-750', 
+      efectividad: 0.85, 
+      residual: 10,
+      reduccionMin: 2,
+      reduccionMax: 4,
+      color: 'rgb(255, 159, 64)'
+    },
+    /*'cipermetrina': { 
+      nombre: "Cipermex®",
+      ingrediente: "cipermetrina",
+      grupo: '3', 
+      dosis: '150-200', 
+      efectividad: 0.88, 
+      residual: 10,
+      color: 'rgb(153, 102, 255)'
+    }*/
+  };
+
+  // inicializacion
+  document.addEventListener('DOMContentLoaded', function() {
+    // inicializar gráf
+    initChart();
+    
+    // event listeners
+    document.getElementById('producto').addEventListener('change', updateProductInfo);
+    document.getElementById('temp').addEventListener('input', updateTemp);
+    document.getElementById('humidity').addEventListener('input', updateHumidity);
+    document.getElementById('precio').addEventListener('input', calcularUmbral);
+    document.getElementById('costo').addEventListener('input', calcularUmbral);
+    document.getElementById("orugas").addEventListener("input", function() {
+      usandoMonitoreo = false;
+      document.getElementById("orugasStats").textContent = this.value;
+      calcularUmbral();
+    });
+
+    // inicializar valores
+    updateProductInfo();
+    calcularUmbral();
+    updateTemp();
+    updateHumidity();
+  });
+
+  // inicializar gráfico mejor
+  function initChart() {
+    const ctx = document.getElementById('graficoPlaga').getContext('2d');
+    const orugasInicial = parseFloat(document.getElementById("orugas").value); 
+     
+    plagaChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        //labels: etiquetas,
+        labels: ['Día 1'],
+        datasets: [
+          {
+            label : 'Orugas/Planta',
+            data: [orugasInicial],
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Daño (%)',
+            data: [0],
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y1'
+          },
+          {
+            label: 'Efecto residual',
+            data: [0],
+            borderColor: 'rgb(76, 175, 80)',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.1,
+            fill: {
+              target: 'origin',
+              above: 'rgba(76, 175, 80, 0.1)'
+            },
+            yAxisID: 'y2'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Orugas/planta'
+            },
+            min: 0,
+            max: 30
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: 'Daño (%)'
+            },
+            min: 0,
+            max: 100,
+            grid: {
+              drawOnChartArea: false
+            }
+          },
+          y2: {
+            type: 'linear',
+            display: false,
+            min: 0,
+            max: 15,
+            grid: {
+              drawOnChartArea: false
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += context.parsed.y.toFixed(context.dataset.label === 'Daño (%)' ? 1 : 0);
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // funciones principales
+  function calcular() {
+    if (plagaChart) {
+      plagaChart.destroy(); 
+    }
+    initChart(); 
+    const producto = document.getElementById("producto").value;
+    const dosis = parseInt(document.getElementById("dosisResultado").value);
+    let orugas = parseInt(document.getElementById("orugas").value);
+    const temp = parseInt(document.getElementById("temp").value);
+    const humedad = parseInt(document.getElementById("humidity").value);
+    document.getElementById("orugasStats").textContent = orugas;
+
+    // efectividad basada en producto y dosis
+    let efectividad = productData[producto].efectividad;
+    let reco = "";
+    let fitotoxicidad = 0;
+    
+    // verificar dosis
+    const dosisRange = productData[producto].dosis.split('-');
+    const minDosis = parseInt(dosisRange[0]);
+    const maxDosis = parseInt(dosisRange[1]);
+    
+    if (dosis < minDosis) {
+      efectividad *= 0.6;
+      reco = "Dosis baja: control subóptimo. ";
+    } else if (dosis > maxDosis) {
+      fitotoxicidad = (dosis - maxDosis) * 0.2;
+      reco = "Dosis alta: riesgo de fitotoxicidad. ";
+    }
+    
+    // reducir poblacion de plaga
+    const orugasPost = Math.max(0, Math.round(orugas * (1 - efectividad)));
+    const mortalidad = orugas - orugasPost;
+    
+    // calcular daño (antes y después de aplicación)
+    daño += orugas * 2;
+    daño = Math.min(daño, 100);
+    daño += fitotoxicidad;
+    
+    // defol proporcional
+    const defoliacion = Math.min(daño * 0.8, 100);
+    
+    // actualizar UI
+    //dia++;
+    document.getElementById("diaStats").textContent = dia;
+    document.getElementById("orugasStats").textContent = orugasPost;
+    document.getElementById("danioStats").textContent = daño.toFixed(1) + "%";
+    document.getElementById("defoliacionStats").textContent = defoliacion.toFixed(1) + "%";
+    document.getElementById("efectividad").textContent = (efectividad * 100).toFixed(1) + "%";
+    document.getElementById("reco").textContent = reco + (mortalidad > 0 ? `Eliminadas ${mortalidad} orugas/planta.` : "Sin efecto significativo.");
+    
+    // registrar aplicación
+    ultimaAplicacion = {
+      dia: dia,
+      producto: producto,
+      dosis: dosis,
+      residual: productData[producto].residual
+    };
+    residualActivo = true;
+    diasResidual = productData[producto].residual;
+    
+    // actualizar gráfico con el efecto residual
+    updateChart(orugasPost, true);
+    actualizarEstadisticas(orugas, daño);
+    
+    // calcular prox aplicacion
+    const proxAplicacion = dia + productData[producto].residual;
+    document.getElementById("proxima-aplicacion").textContent = `Día ${proxAplicacion} (${productData[producto].residual} días residual)`;
+    
+    // actualizar círculos visuales
+    updateCircles(orugasPost, daño);
+    
+    // verificar alertas
+    checkAlertas(orugasPost, daño);
+    
+    // guardar en historial
+    historial.push({
+      dia: dia,
+      orugas: orugasPost,
+      daño: daño,
+      producto: producto,
+      dosis: dosis,
+      tipo: 'aplicacion'
+    });
+    
+    // mostrar en resultados de simulacion
+    actualizarDosis();
+    addSimulationResult(dia, `Aplicación realizada: ${productData[producto].nombre} (${dosis} cm³/ha). Efectividad: ${(efectividad*100).toFixed(1)}%`, 'application');
+    actualizarEstadisticas(orugas, daño);
+   dia++;
+  }
+
+
+  // funcion mejorada para actualizar el graf
+  function updateChart(orugas, residualActivo) {
+    let residualValue = 0;
+    
+    if(residualActivo && diasResidual > 0) {
+        // calcular altura proporcional al residual max del producto actual
+        const productoActual = ultimaAplicacion ? ultimaAplicacion.producto : document.getElementById("producto").value;
+        const residualMax = productData[productoActual].residual;
+        residualValue = 15 * (diasResidual / residualMax);
+        
+        // actualizar el color del residual según el producto aplicado
+        plagaChart.data.datasets[2].borderColor = productData[productoActual].color;
+        plagaChart.data.datasets[2].backgroundColor = productData[productoActual].color.replace(')', ', 0.1)').replace('rgb', 'rgba');
+    }
+    
+    // agregar nuevos datos al graf
+    plagaChart.data.labels.push(`Día ${dia}`);
+    plagaChart.data.datasets[0].data.push(orugas);
+    plagaChart.data.datasets[1].data.push(daño);
+    plagaChart.data.datasets[2].data.push(residualValue);
+    
+    // limitar a 30 puntos de datos para mantener el graf legible
+    if(plagaChart.data.labels.length > 30) {
+        plagaChart.data.labels.shift();
+        plagaChart.data.datasets[0].data.shift();
+        plagaChart.data.datasets[1].data.shift();
+        plagaChart.data.datasets[2].data.shift();
+    }
+    
+    // ajustar el max del eje Y si es necesario
+    const maxOrugas = Math.max(...plagaChart.data.datasets[0].data);
+    if(maxOrugas > plagaChart.options.scales.y.max * 0.8) {
+        plagaChart.options.scales.y.max = Math.ceil(maxOrugas / 5) * 5 + 5;
+    }
+    
+    plagaChart.update();
+  }
+
+  let semilla = Date.now(); //empieza dif cada vez
+
+function generarAleatorioCongruencial() {
+    const a = 1664525;
+    const c = 1013904223;
+    const m = Math.pow(2, 32);
+    semilla = (a * semilla + c) % m;
+    return semilla / m;
+}
+
+function generarNormal(media, desvio) {
+  let suma = 0;
+  for (let i = 0; i < 12; i++) {
+    let u = generarAleatorioCongruencial(); // valor uniforme entre 0 y 1
+    suma += u;
+  }
+  const x = desvio * (suma - 6) + media;
+  return x;
+}
+
+function seleccionarAleatorio() {
+  const u = generarAleatorioCongruencial();
+  var select = document.getElementById("producto");
+  let producto, modo, dosis;
+
+  if (u < 0.55) {
+    producto = "amplico";
+    modo = "Grupo 28 + 3 (clorantraniliprol + lambda-chialotrina)";
+    dosis = "80-110 cm³/ha";
+  } else if (u < 0.85) {
+    producto = "coragen";
+    modo = "Grupo 28 (clorantraniliprol)";
+    dosis = "30-50 cm³/ha";
+  } else {
+    producto = "dipel";
+    modo = "Grupo 11 (Bacillus thuringiensis)";
+    dosis = "500-750 cm³/ha";
+  }
+
+  // Actualizar visualmente
+  document.getElementById("producto").value = producto;
+  document.getElementById("modo-accion").textContent = "Modo de acción: " + modo;
+  document.getElementById("dosis-recomendada").textContent = "Dosis recomendada: " + dosis;
+  actualizarDosis();
+}
+
+// Al cambiar manualmente el select
+document.getElementById("producto").addEventListener("change", function () {
+  const value = this.value;
+  let modo = "", dosis = "";
+
+  switch (value) {
+    case "amplico":
+      modo = "Grupo 28 + 3 (Diamidas + Piretroides)";
+      dosis = "80-110 cm³/ha";
+      break;
+    case "coragen":
+      modo = "Grupo 28 (Diamidas)";
+      dosis = "30-50 cm³/ha";
+      break;
+    case "dipel":
+      modo = "Grupo 11A (Bacillus thuringiensis)";
+      dosis = "500-750 cm³/ha";
+      break;
+  }
+
+  document.getElementById("modo-accion").textContent = "Modo de acción: " + modo;
+  document.getElementById("dosis-recomendada").textContent = "Dosis recomendada: " + dosis;
+});
+
+function generarNormal(media, desvio) {
+  let suma = 0;
+  for (let i = 0; i < 12; i++) {
+    suma += generarAleatorioCongruencial(); // 
+  }
+  let valor = desvio * (suma - 6) + media;
+  return Math.max(0, Math.round(valor)); // 
+}
+  
+function generarUniforme(a, b) {
+  const u = generarAleatorioCongruencial(); 
+  return Math.trunc(a + (b - a) * u); 
+}
+
+function actualizarDosis() {
+  const producto = document.getElementById("producto").value;
+  var modoAccion = document.getElementById("modo-accion");
+  var dosisRecomendada = document.getElementById("dosis-recomendada");
+  var residual = document.getElementById("residual");
+
+  let dosis = "–";
+
+  if (producto === "amplico") {
+    dosis = generarUniforme(80, 110);
+  } else if (producto === "coragen") {
+    dosis = generarUniforme(30, 50);
+  } else if (producto === "dipel") {
+    dosis = generarUniforme(500, 750);
+  }
+
+  document.getElementById("dosisResultado").textContent = dosis;
+  const reduccion = obtenerReduccionDiaria(productoId);
+  document.getElementById("reduccion-estimada").textContent = `Reducción estimada: ${reduccion} orugas por planta`;
+}
+
+function obtenerReduccionDiaria(producto) {
+  if (producto === "amplico") {
+    return generarUniforme(2, 6); // AMPLIGO: 2 a 6 orugas
+  } else if (producto === "coragen") {
+    return generarUniforme(1, 4); // CORAGEN: 1 a 4 orugas
+  } else if (producto === "dipel") {
+    return generarUniforme(2, 4); // DIPEL: 2 a 4 orugas
+  }
+  
+}
+
+
+  function simular30Dias() {
+    if (plagaChart) {
+      plagaChart.destroy(); 
+    }
+    initChart(); 
+    const simulationResults = document.getElementById("simulationResults");
+    simulationResults.innerHTML = "<h3>Simulación de 30 días</h3>";
+    
+    const producto = document.getElementById("producto").value;
+    const nombreProducto = productData[producto].nombre;
+    const dosis = parseInt(document.getElementById("dosisResultado").value);
+    //let orugas = parseInt(document.getElementById("orugasStats").textContent);
+    let orugas = parseInt(document.getElementById("orugas").value);
+    const orugasInicial = orugas;
+    if (isNaN(orugas)) orugas = 0;
+    const temp = parseInt(document.getElementById("temp").value);
+    const humedad = parseInt(document.getElementById("humidity").value);
+    const residual = productData[producto].residual;
+    const umbral = calcularUmbral();
+    
+    
+    // vriables de seguimiento
+    let aplicacionesRealizadas = 0;
+    let maxOrugas = orugas;
+    let maxDaño = daño;
+    let diasSobreUmbral = 0;
+    
+    // factores de crecimiento base
+    const tasaCrecimientoBase = 0.15; // 15% diario en condiciones optimas
+    
+    for(let i = 0; i < 30; i++) {
+        dia++;
+        
+        // calculo de crecimiento diario
+        let crecimientoDiario = generarNormal(3, 1);
+
+        //let crecimientoDiario = tasaCrecimientoBase * tempFactor * humFactor;
+        
+        // Reducción por efecto residual
+        let reduccionResidual = 1.0;
+        if(residualActivo) {
+            reduccionResidual = 0.2 + (diasResidual/residual) * 0.5;
+            diasResidual--;
+            
+            if(diasResidual <= 0) {
+                residualActivo = false;
+                addSimulationResult(dia, `Fin del efecto residual de ${nombreProducto}`, 'critical');
+            }
+        }
+        
+        // Aplicar crecimiento
+        //orugas = Math.max(0, Math.round(orugas * (1 + crecimientoDiario) * reduccionResidual));
+        orugas = Math.max(0, Math.round(orugas + crecimientoDiario)* reduccionResidual);
+
+        
+        // Calcular daño
+        daño += (orugas * (residualActivo ? 0.3 : 1.0)) / 10;
+        daño = Math.min(daño, 100);
+        
+        // Registrar días sobre umbral
+        if(orugas >= umbral) {
+            diasSobreUmbral++;
+        }
+        
+        // Toma de decisión para aplicación
+        const diasDesdeUltimaAplicacion = ultimaAplicacion ? dia - ultimaAplicacion.dia : residual + 1;
+        const residualPorTerminar = residualActivo && diasResidual <= 2;
+        
+        if(orugas >= umbral && (!residualActivo || residualPorTerminar) && diasDesdeUltimaAplicacion >= residual * 0.6) {
+            // efectividad con variación
+            const efectividadVariacion = 0.9 + Math.random() * 0.1;
+            let efectividad = productData[producto].efectividad * efectividadVariacion;
+            
+            if(temp > 30) efectividad *= 0.8;
+            //const orugasAntes = orugas;
+            const orugasPost = Math.max(0, Math.round(orugas * (1 - efectividad)));
+            const mortalidad = orugas - orugasPost;
+            
+            addSimulationResult(dia-1, `APLICACIÓN: ${nombreProducto}. El comportamiento de la plaga tras la aplicación del fitosanitario se observa en la gráfica a lo largo de los días.` , 'application');
+        
+            aplicacionesRealizadas++;
+            residualActivo = true;
+            diasResidual = residual;
+            ultimaAplicacion = {
+                dia: dia,
+                producto: producto,
+                dosis: dosis,
+                residual: residual
+            };
+            
+            daño += 1.5;
+        }
+        
+        // actualizar máx<<<
+        //maxOrugas = Math.max(maxOrugas, orugas);
+        maxOrugas = Math.max(maxOrugas, Math.round(orugas));
+        maxDaño = Math.max(maxDaño, daño);
+        
+        // axctualizar gráfico cada 2 días
+        if(i % 2 === 0) updateChart(orugas, residualActivo);
+    }
+    
+    // resultados finales 
+    const porcentajeDiasControlados = ((30 - diasSobreUmbral) / 30 * 100).toFixed(1);
+    const resumen = `📊 RESULTADOS FINALES:
+        - Aplicaciones necesarias: ${aplicacionesRealizadas}
+        -Maxima Poblacion Registrada: ${maxOrugas}
+        - Días con plaga sobre umbral: ${diasSobreUmbral} (${porcentajeDiasControlados}% controlado)
+        - Daño máximo acumulado: ${maxDaño.toFixed(1)}%`;
+      
+    addSimulationResult(dia, resumen, 'summary');
+
+    // Actualizar UI
+    actualizarEstadisticas(orugas);
+    updateCircles(orugas, daño);
+  }
+
+  function simularSinTratamiento() {
+    if (plagaChart) {
+        plagaChart.destroy(); 
+    }
+    initChart(); 
+    
+    const simulationResults = document.getElementById("simulationResults");
+    simulationResults.innerHTML = "<h3>Simulación SIN tratamiento (7 días):</h3>";
+    
+    let orugasIniciales = parseInt(document.getElementById("orugasStats").textContent);
+    let orugas = orugasIniciales;
+    const temp = parseInt(document.getElementById("temp").value);
+    const humedad = parseInt(document.getElementById("humidity").value);
+    const umbral = calcularUmbral();
+    
+    // guardar el día actual para restaurarlo después
+    const diaInicial = dia;
+    // limpiar el gráfico para empezar desde día 1
+    plagaChart.data.labels = ['Día 1'];
+    plagaChart.data.datasets[0].data = [orugas];
+    plagaChart.data.datasets[1].data = [daño];
+    plagaChart.data.datasets[2].data = [0];
+    
+    for(let i = 1; i <= 7; i++) {
+        dia = diaInicial + i; 
+        
+        // simular crecimiento de plaga
+        const crecimientoPlaga = generarNormal(3, 1);
+        orugas = Math.max(0, Math.round(orugas + crecimientoPlaga));
+        
+        //  daño
+        daño += orugas * 2;
+        daño = Math.min(daño, 100);
+        
+        
+        if(orugas >= umbral) {
+            addSimulationResult(i, `PLAGA CRÍTICA: ${orugas} orugas/planta (Umbral: ${umbral})`, 'critical');
+        } else {
+            addSimulationResult(i, `Plaga: ${orugas} orugas/planta`, '');
+        }
+        
+        // Actualizar gráfico
+        plagaChart.data.labels.push(`Día ${i}`);
+        plagaChart.data.datasets[0].data.push(orugas);
+        plagaChart.data.datasets[1].data.push(daño);
+        plagaChart.data.datasets[2].data.push(0); // Sin efecto residual
+        
+        
+        const maxOrugas = Math.max(...plagaChart.data.datasets[0].data);
+        if(maxOrugas > plagaChart.options.scales.y.max * 0.8) {
+            plagaChart.options.scales.y.max = Math.ceil(maxOrugas / 5) * 5 + 5;
+        }
+    }
+    
+    plagaChart.update();
+    
+    // Actualizar UI final
+    document.getElementById("diaStats").textContent = dia;
+    document.getElementById("orugasStats").textContent = orugas;
+    document.getElementById("danioStats").textContent = daño.toFixed(1) + "%";
+    document.getElementById("defoliacionStats").textContent = Math.min(daño * 0.8, 100).toFixed(1) + "%";
+    
+    // Mostrar resumen
+    let mensajeAumento;
+    if(orugasIniciales === 0) {
+        mensajeAumento = `La plaga apareció (de 0 a ${orugas} orugas/planta)`;
+    } else {
+        const aumento = ((orugas / orugasIniciales) * 100 - 100).toFixed(1);
+        mensajeAumento = `Plaga aumentó ${aumento}% (de ${orugasIniciales} a ${orugas} orugas/planta)`;
+    }
+   
+    addSimulationResult(7, `RESUMEN: ${mensajeAumento} en 7 días sin tratamiento. Daño acumulado: ${daño.toFixed(1)}%`, 'critical');
+    
+    // Actualizar círculos visuales
+    updateCircles(orugas, daño);
+}
+
+
+function scout(clickedElement, point) {
+    // Quitar clase 'seleccionado' de todos los lotes
+    document.querySelectorAll('.scout-point').forEach(btn => {
+        btn.classList.remove('seleccionado');
+        btn.style.backgroundColor = '#4CAF50'; // verde
+        btn.style.color = 'white';
+    });
+
+    // Estilo del lote seleccionado
+    clickedElement.classList.add('seleccionado');
+    clickedElement.style.backgroundColor = '#FFA726'; // naranja
+    clickedElement.style.color = 'black';
+
+    // Generar valores
+    const uPlantas = generarAleatorioCongruencial();
+    const totalPlantas = Math.floor(40000 + (65000 - 40000) * uPlantas);
+
+    const uOrugas = generarAleatorioCongruencial();
+    const orugasPorPlanta = Math.floor((7 + 1) * uOrugas);
+
+    // Mostrar resultado
+    document.getElementById("scout-result").innerHTML =
+        `🔍 Lote ${point}: ${orugasPorPlanta} Orugas/Planta<br>🌱 Total estimado de plantas: ${totalPlantas.toLocaleString()}`;
+
+    // Guardar datos globales
+    scoutData[point] = {
+        orugasPorPlanta,
+        totalPlantas
+    };
+
+    // Asignar valores al panel
+    usandoMonitoreo = true;
+    document.getElementById("orugas").value = orugasPorPlanta;
+    document.getElementById("orugasStats").textContent = orugasPorPlanta;
+
+    calcularUmbral();
+}
+
+
+  function updateScoutResults() {
+    const completed = scoutData.filter(x => x !== undefined).length;
+    
+    if(completed >= 3 && usandoMonitoreo) {
+        const avg = scoutData.reduce((a,b) => a + (b || 0), 0) / completed;
+        const adjustedAvg = Math.round(avg * 1.2);
+        
+        // Actualiza todos los campos relevantes
+        document.getElementById("orugas").value = adjustedAvg;
+        document.getElementById("orugasStats").textContent = adjustedAvg;
+        
+        document.getElementById("scout-result").innerHTML = 
+            `🔍 Promedio: ${avg.toFixed(1)} orugas/planta (${completed} puntos muestreados)`;
+        
+        calcularUmbral();
+    } else if(usandoMonitoreo) {
+        document.getElementById("scout-result").innerHTML = 
+            `Realizado ${completed}/3 muestreos necesarios`;
+    }
+  }
+
+  function calcularUmbral() {
+    // Obtener valores de los inputs
+    const precio = parseFloat(document.getElementById("precio").value);
+    const costo = parseFloat(document.getElementById("costo").value); 
+    
+    // Obtener orugas - priorizar el valor manual si existe
+    let orugasInput = document.getElementById("orugas").value;
+    let orugasActuales = orugasInput ? parseFloat(orugasInput) : parseFloat(document.getElementById('orugasStats').innerText);
+
+    // Validar valores ingresados
+    if (isNaN(precio) || isNaN(costo) || precio <= 0 || costo <= 0) {
+        alert("Por favor ingrese valores válidos (mayores a cero)");
+        return;
+    }
+
+    // calcular umbral economico (5% de daño por oruga)
+    const porcentajeDanio = 0.05; // 5% de daño por oruga
+    let umbral = costo / (precio * porcentajeDanio);
+    umbral = Math.max(2, Math.round(umbral)); // Mínimo 2 orugas
+
+    // Calcular perdida economica actual
+    const perdidaActual = orugasActuales * precio * porcentajeDanio;
+
+    // Generar mensajes explicativos
+    let mensajeUmbral = `Umbral económico: <strong>${umbral} orugas/planta</strong>`;
+    mensajeUmbral += `<br><small>(Cada oruga causa un ${porcentajeDanio*100}% de pérdida en el valor del cultivo)</small>`;
+
+    let mensajeDecision = "";
+    let estiloDecision = "";
+
+    if (orugasActuales >= umbral) {
+        mensajeDecision = `✔️ <strong>CONVIENE APLICAR</strong><br>`;
+        mensajeDecision += `Las ${orugasActuales} orugas/planta causan una pérdida de $${perdidaActual.toFixed(2)}, `;
+        mensajeDecision += `mientras que el tratamiento cuesta $${costo.toFixed(2)}.`;
+    } else {
+        mensajeDecision = `❌ <strong>NO CONVIENE APLICAR</strong><br>`;
+        mensajeDecision += `Las ${orugasActuales} orugas/planta causan una pérdida de $${perdidaActual.toFixed(2)}, `;
+        mensajeDecision += `que es menor que el costo del tratamiento ($${costo.toFixed(2)}).`;
+    }
+
+    // Mostrar resultados en la interfaz
+    document.getElementById('umbral-info').innerHTML = mensajeUmbral;
+    document.getElementById('decision-aplicar').innerHTML = `<div style="${estiloDecision}">${mensajeDecision}</div>`;
+
+    return umbral;
+  }
+
+  function actualizarEstadisticas(orugas) {
+    
+    document.getElementById("diaStats").textContent = dia;
+    //document.getElementById("orugasStats").textContent = orugas;
+    document.getElementById("orugasStats").textContent = Math.round(orugas);
+    document.getElementById("danioStats").textContent = daño.toFixed(1) + "%";
+    document.getElementById("defoliacionStats").textContent = Math.min(daño * 0.8, 100).toFixed(1) + "%";
+    
+    // Recomendación basada en estado actual
+    const umbralActual = calcularUmbral();
+    let recomendacion = "";
+    
+    if(residualActivo) {
+        recomendacion = `Efecto residual activo (${diasResidual} días restantes). `;
+        if(orugas > umbralActual) {
+            recomendacion += "Se recomienda monitoreo diario - posible falla de control.";
+        } else {
+            recomendacion += "Próximo monitoreo recomendado en " + Math.max(3, diasResidual - 2) + " días.";
+        }
+    } else {
+        if(orugas > umbralActual) {
+            recomendacion = "⚠️ NECESARIA APLICACIÓN INMEDIATA - Plaga sobre umbral económico";
+        } else {
+            recomendacion = "Situación bajo control. Monitorear cada 3-5 días.";
+        }
+    }
+    
+    document.getElementById("reco").textContent = recomendacion;
+    document.getElementById("proxima-aplicacion").textContent = residualActivo ? 
+        `Próxima aplicación posible: día ${dia + Math.max(3, diasResidual)}` : 
+        "Puede aplicar cuando la plaga alcance el umbral";
+  }
+
+
+  function updateCircles(orugas, daño) {
+    const circleFlor = document.getElementById("circleFlor");
+    const circleOruga = document.getElementById("circleOruga");
+    const umbral = calcularUmbral();
+    
+    // color del círculo del cultivo (basado en daño)
+    circleFlor.style.borderColor = daño > 70 ? "#e53935" : // rojo si daño > 70%
+                                daño > 40 ? "#fbc02d" : // emarillo si daño > 40%
+                                "#66bb6a"; // verde si daño <= 40%
+    
+    // coloe del círculo de orugas (basado en umbral económico y efectividad)
+    // considerar si hay efecto residual activo
+    const reduccionEsperada = residualActivo ? 0.7 : 0; // 70% de reducción si hay residual
+    const orugasEfectivas = orugas * (1 - reduccionEsperada);
+    
+    circleOruga.style.borderColor = orugasEfectivas > umbral * 1.5 ? "#e53935" : // rojo si supera 150% del umbral
+                                   orugasEfectivas > umbral ? "#fbc02d" : // amarillo si supera el umbral
+                                   "#66bb6a"; // verde si está bajo control
+    
+    
+    circleFlor.style.transform = 'scale(1.1)';
+    circleOruga.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+        circleFlor.style.transform = 'scale(1)';
+        circleOruga.style.transform = 'scale(1)';
+    }, 300);
+}
+
+  function checkAlertas(orugas, daño) {
+    const umbral = calcularUmbral();
+    const alertas = [];
+    
+    if(orugas > umbral * 1.5) {
+      alertas.push(`🚨 ALERTA: Población (${orugas}) supera 150% del umbral (${umbral})`);
+    }
+    
+    if(daño > 30) {
+      alertas.push(`⚠️ Daño acumulado crítico (${daño.toFixed(1)}%)`);
+    }
+    
+    if(orugas > umbral && historial.length > 0 && historial[historial.length-1].producto) {
+      const ultimoProducto = historial[historial.length-1].producto;
+      alertas.push(`🔍 Revisar estrategia - persistencia de plaga con ${productData[ultimoProducto].nombre}`);
+    }
+    
+    if(alertas.length > 0) {
+      showNotification(alertas.join('<br>'));
+    }
+  }
+
+  function addSimulationResult(dia, mensaje, tipo) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = `simulation-day ${tipo}`;
+    resultDiv.innerHTML = `<strong>Día ${dia}:</strong> ${mensaje}`;
+    document.getElementById('simulationResults').appendChild(resultDiv);
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function showNotification(msg) {
+    const notif = document.createElement('div');
+    notif.className = 'notification';
+    notif.innerHTML = msg;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 7000);
+  }
+
+  function updateProductInfo() {
+    const producto = document.getElementById("producto").value;
+    const info = productData[producto];
+    document.getElementById("modo-accion").textContent = `Modo de acción: Grupo ${info.grupo} (${info.ingrediente})`;
+    document.getElementById("dosis-recomendada").textContent = `Dosis recomendada: ${info.dosis} cm³/ha`;
+    document.getElementById("residual").textContent = `Duración residual: ${info.residual} días`;
+  }
+
+  function updateTemp() {
+    const temp = document.getElementById("temp").value;
+    document.getElementById("tempValue").textContent = temp;
+  }
+
+  function updateHumidity() {
+    const humidity = document.getElementById("humidity").value;
+    document.getElementById("humidityValue").textContent = humidity;
+  }
+
+
+  let usandoMonitoreo = false;
+</script>
+</body>
+</html>
